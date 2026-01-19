@@ -1,10 +1,10 @@
-import { IconSvgProps } from "@/types/types"
+import { IconSvgProps } from "@/types/types";
 
 export const LocationIcon: React.FC<IconSvgProps> = ({
   size,
   width = 48,
   height = 48,
-  color="#292D32",
+  color = "#292D32",
   ...props
 }) => (
   <svg width={width} height={height} viewBox="0 0 49 48" fill="none" {...props}>
@@ -14,4 +14,4 @@ export const LocationIcon: React.FC<IconSvgProps> = ({
       strokeWidth="2"
     />
   </svg>
-)
+);

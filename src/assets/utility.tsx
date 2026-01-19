@@ -1,4 +1,4 @@
-import { IconSvgProps } from "@/types/types"
+import { IconSvgProps } from "@/types/types";
 
 export const ShareIcon: React.FC<IconSvgProps> = ({
   size,
@@ -16,7 +16,7 @@ export const ShareIcon: React.FC<IconSvgProps> = ({
       strokeLinejoin="round"
     />
   </svg>
-)
+);
 
 export const CallIcon: React.FC<IconSvgProps> = ({
   size,
@@ -48,7 +48,7 @@ export const CallIcon: React.FC<IconSvgProps> = ({
       strokeLinejoin="round"
     />
   </svg>
-)
+);
 
 export const RightArrowIcon: React.FC<IconSvgProps> = ({
   size,
@@ -77,7 +77,7 @@ export const RightArrowIcon: React.FC<IconSvgProps> = ({
       strokeLinecap="round"
     />
   </svg>
-)
+);
 
 export const LeftArrowIcon: React.FC<IconSvgProps> = ({
   size,
@@ -106,7 +106,7 @@ export const LeftArrowIcon: React.FC<IconSvgProps> = ({
       strokeLinecap="round"
     />
   </svg>
-)
+);
 
 export const DownArrowIcon: React.FC<IconSvgProps> = ({
   size,
@@ -129,7 +129,7 @@ export const DownArrowIcon: React.FC<IconSvgProps> = ({
       strokeLinecap="round"
     />
   </svg>
-)
+);
 
 export const UpArrowIcon: React.FC<IconSvgProps> = ({
   size,
@@ -153,7 +153,7 @@ export const UpArrowIcon: React.FC<IconSvgProps> = ({
       strokeLinecap="round"
     />
   </svg>
-)
+);
 
 export const UpChevronIcon: React.FC<IconSvgProps> = ({
   size,
@@ -171,7 +171,7 @@ export const UpChevronIcon: React.FC<IconSvgProps> = ({
       strokeLinecap="round"
     />
   </svg>
-)
+);
 
 export const FilterIcon: React.FC<IconSvgProps> = ({
   size,
@@ -225,7 +225,7 @@ export const FilterIcon: React.FC<IconSvgProps> = ({
       strokeWidth={strokeWidth ?? 2}
     />
   </svg>
-)
+);
 
 export const CalendarIcon: React.FC<IconSvgProps> = ({
   size,
@@ -278,7 +278,7 @@ export const CalendarIcon: React.FC<IconSvgProps> = ({
       strokeLinejoin="round"
     />
   </svg>
-)
+);
 
 export const SortIcon: React.FC<IconSvgProps> = ({
   size,
@@ -312,7 +312,7 @@ export const SortIcon: React.FC<IconSvgProps> = ({
       strokeLinecap="round"
     />
   </svg>
-)
+);
 
 export const SearchIcon: React.FC<IconSvgProps> = ({
   size,
@@ -332,7 +332,7 @@ export const SearchIcon: React.FC<IconSvgProps> = ({
       stroke={color}
     />
   </svg>
-)
+);
 
 export const HamburgerIcon: React.FC<IconSvgProps> = ({
   size,
@@ -351,7 +351,7 @@ export const HamburgerIcon: React.FC<IconSvgProps> = ({
     <path d="M8 24H42" stroke={color} strokeWidth="3" strokeLinecap="round" />
     <path d="M8 36H42" stroke={color} strokeWidth="3" strokeLinecap="round" />
   </svg>
-)
+);
 
 export const ListStarColored: React.FC<IconSvgProps> = ({
   size = 12,
@@ -373,7 +373,7 @@ export const ListStarColored: React.FC<IconSvgProps> = ({
       fillRule="evenodd"
     />
   </svg>
-)
+);
 
 export const CircleIcon: React.FC<IconSvgProps> = ({
   size = 12,
@@ -391,7 +391,7 @@ export const CircleIcon: React.FC<IconSvgProps> = ({
   >
     <circle cx="24" cy="24" r="18" fill={color} />
   </svg>
-)
+);
 
 export const CheckIcon: React.FC<IconSvgProps> = ({
   size = 12,
@@ -415,7 +415,7 @@ export const CheckIcon: React.FC<IconSvgProps> = ({
       strokeLinecap="round"
     />
   </svg>
-)
+);
 
 export const InstagramIcon: React.FC<IconSvgProps> = ({
   size = 12,
@@ -451,7 +451,7 @@ export const InstagramIcon: React.FC<IconSvgProps> = ({
       strokeWidth="2"
     />
   </svg>
-)
+);
 
 export const MailIcon: React.FC<IconSvgProps> = ({
   size = 12,
@@ -482,7 +482,7 @@ export const MailIcon: React.FC<IconSvgProps> = ({
       strokeLinecap="round"
     />
   </svg>
-)
+);
 export const MailIconNoBg: React.FC<IconSvgProps> = ({
   size = 14,
   width,
@@ -512,7 +512,7 @@ export const MailIconNoBg: React.FC<IconSvgProps> = ({
       strokeLinecap="round"
     />
   </svg>
-)
+);
 
 export const LinkedInIcon: React.FC<IconSvgProps> = ({
   size = 12,
@@ -541,7 +541,7 @@ export const LinkedInIcon: React.FC<IconSvgProps> = ({
       fill="#292D32"
     />
   </svg>
-)
+);
 export const LinkedInIconNoBg: React.FC<IconSvgProps> = ({
   size = 12,
   width,
@@ -565,7 +565,7 @@ export const LinkedInIconNoBg: React.FC<IconSvgProps> = ({
       fill={color}
     />
   </svg>
-)
+);
 
 export const YoutubeIcon: React.FC<IconSvgProps> = ({
   size = 12,
@@ -594,4 +594,4 @@ export const YoutubeIcon: React.FC<IconSvgProps> = ({
       fill="#292D32"
     />
   </svg>
-)
+);

@@ -1,4 +1,4 @@
-import { IconSvgProps } from "@/types/types"
+import { IconSvgProps } from "@/types/types";
 
 export const HouseIcon: React.FC<IconSvgProps> = ({
   size,
@@ -20,4 +20,4 @@ export const HouseIcon: React.FC<IconSvgProps> = ({
       strokeWidth={strokeWidth}
     />
   </svg>
-)
+);

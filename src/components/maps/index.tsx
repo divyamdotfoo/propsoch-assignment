@@ -1,14 +1,22 @@
-"use client"
-import dynamic from "next/dynamic"
+"use client";
+import dynamic from "next/dynamic";
 
-const DiscoveryMap = dynamic(() => import("./discovery-map").then(mod => mod.DiscoveryMap), { ssr: false, loading: () => { return <div>Loading...</div> } })
-
-
+const DiscoveryMap = dynamic(
+    () => import("./discovery-map").then((mod) => mod.DiscoveryMap),
+    {
+        ssr: false,
+        loading: () => {
+            return <div>Loading...</div>;
+        },
+    }
+);
 
 type DiscoveryMapWrapperProps = {
-    allFilteredData: any
-}
+    allFilteredData: any;
+};
 
-export default function DiscoveryMapWrapper({ allFilteredData }: DiscoveryMapWrapperProps) {
-    return <DiscoveryMap allFilteredData={allFilteredData} />
+export default function DiscoveryMapWrapper({
+    allFilteredData,
+}: DiscoveryMapWrapperProps) {
+    return <DiscoveryMap allFilteredData={allFilteredData} />;
 }

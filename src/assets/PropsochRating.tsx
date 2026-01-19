@@ -1,5 +1,5 @@
-import { IconSvgProps } from "@/types/types"
-import { cn } from "@/utils/helpers"
+import { IconSvgProps } from "@/types/types";
+import { cn } from "@/utils/helpers";
 
 export const PropscoreRating = ({
   rating,
@@ -7,12 +7,12 @@ export const PropscoreRating = ({
   width = 260,
   height = 48,
 }: {
-  rating: number
-  className?: string
-  width?: number
-  height?: number
+  rating: number;
+  className?: string;
+  width?: number;
+  height?: number;
 }) => {
-  let calculateFilledPercent = (rating / 5) * 100
+  let calculateFilledPercent = (rating / 5) * 100;
   return (
     <div className={cn("relative", className)}>
       <RatingUnfilled width={width} height={height} />
@@ -23,8 +23,8 @@ export const PropscoreRating = ({
         <RatingFilled width={width} height={height} />
       </div>
     </div>
-  )
-}
+  );
+};
 export const RatingUnfilled: React.FC<IconSvgProps> = ({
   width = 260,
   height = 48,
@@ -60,7 +60,7 @@ export const RatingUnfilled: React.FC<IconSvgProps> = ({
       fill="#D5D8E3"
     />
   </svg>
-)
+);
 
 export const RatingFilled: React.FC<IconSvgProps> = ({
   width = 260,
@@ -97,4 +97,4 @@ export const RatingFilled: React.FC<IconSvgProps> = ({
       fill="#FF6D33"
     />
   </svg>
-)
+);

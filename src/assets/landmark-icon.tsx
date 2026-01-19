@@ -1,4 +1,4 @@
-import { IconSvgProps } from "@/types/types"
+import { IconSvgProps } from "@/types/types";
 
 export const LandmarkIcon: React.FC<IconSvgProps> = ({
   size,
@@ -26,4 +26,4 @@ export const LandmarkIcon: React.FC<IconSvgProps> = ({
       </linearGradient>
     </defs>
   </svg>
-)
+);

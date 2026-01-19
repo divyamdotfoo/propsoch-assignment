@@ -37,7 +37,6 @@ interface Location {
   name: string;
 }
 
-
 export function DiscoveryMap({
   allFilteredData,
 }: Readonly<{ allFilteredData: any }>) {
@@ -105,15 +104,15 @@ export function DiscoveryMap({
 
           {allFilteredData && allFilteredData.projects.length > 0
             ? allFilteredData.projects.map((project: projectListing) => (
-              <Marker
-                position={[project.latitude, project.longitude]}
-                key={project.id}
-                icon={getOtherLocationIcon(
-                  project.name,
-                  selectedProperty?.id == project.id
-                )}
-              />
-            ))
+                <Marker
+                  position={[project.latitude, project.longitude]}
+                  key={project.id}
+                  icon={getOtherLocationIcon(
+                    project.name,
+                    selectedProperty?.id == project.id
+                  )}
+                />
+              ))
             : null}
           {selectedLocation && selectedProperty && (
             <Popup
@@ -126,8 +125,9 @@ export function DiscoveryMap({
               closeButton
             >
               <Link
-                href={`/property-for-sale-in/${selectedProperty.city.toLowerCase()}/${selectedProperty.slug.toLowerCase()}/${selectedProperty.id
-                  }`}
+                href={`/property-for-sale-in/${selectedProperty.city.toLowerCase()}/${selectedProperty.slug.toLowerCase()}/${
+                  selectedProperty.id
+                }`}
                 target="_blank"
               >
                 <div className="flex w-full flex-col gap-3">
@@ -140,7 +140,7 @@ export function DiscoveryMap({
                     className={cn(
                       "aspect-video size-full rounded-lg object-cover transition-all duration-400 ease-in-out",
                       selectedProperty.projectStatus === "soldOut" &&
-                      "grayscale"
+                        "grayscale"
                     )}
                   />
                   <h3
@@ -231,7 +231,6 @@ export function DiscoveryMap({
   );
 }
 
-
 // keeping utilities functions below the main export
 
 export const renderIcon = (
@@ -284,6 +283,3 @@ function MapController({
 
   return null;
 }
-
-
-

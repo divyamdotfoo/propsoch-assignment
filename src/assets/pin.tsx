@@ -1,4 +1,4 @@
-import { IconSvgProps } from "@/types/types"
+import { IconSvgProps } from "@/types/types";
 
 export const Pin: React.FC<IconSvgProps> = ({
   size,
@@ -22,7 +22,7 @@ export const Pin: React.FC<IconSvgProps> = ({
       fill="#FF6D33"
     />
   </svg>
-)
+);
 export const PinFilled: React.FC<IconSvgProps> = ({
   size,
   width = 21,
@@ -42,4 +42,4 @@ export const PinFilled: React.FC<IconSvgProps> = ({
       fill={color}
     />
   </svg>
-)
+);

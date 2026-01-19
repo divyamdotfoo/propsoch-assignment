@@ -1,4 +1,4 @@
-import { IconSvgProps } from "@/types/types"
+import { IconSvgProps } from "@/types/types";
 
 export const BudgetIcon: React.FC<IconSvgProps> = ({
   size,
@@ -13,4 +13,4 @@ export const BudgetIcon: React.FC<IconSvgProps> = ({
       fill={color}
     />
   </svg>
-)
+);
