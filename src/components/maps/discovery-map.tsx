@@ -1,15 +1,5 @@
-"use client";
-
-// TODO:  When zooming out, property nodes overlap and become cluttered.
-// Improve visual spacing for a better UI/UX.
-
 import "leaflet/dist/leaflet.css";
-
-// TODO : This import gives "window is not defined" error in the terminal. Fix it.
 import "leaflet-defaulticon-compatibility";
-
-
-// TODO : Clicking a marker should ideally open the popup with the selected property details. Currently not implemented. Implement it.
 
 import { JSX, useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -36,11 +26,10 @@ import { BudgetIcon } from "@/assets/budget-icon";
 import { HouseIcon } from "@/assets/house-icon";
 import { LocationIcon } from "@/assets/location-icon";
 import { CalendarIcon } from "@/assets/utility";
-import L, { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
+import L from "leaflet";
 import { LocationType, projectListing } from "@/types/types";
-import { Badge } from "./badge";
+import { Badge } from "../badge";
 import { renderToString } from "react-dom/server";
-import dynamic from "next/dynamic";
 
 interface Location {
   lat: number;
@@ -48,58 +37,8 @@ interface Location {
   name: string;
 }
 
-export const renderIcon = (
-  icon: JSX.Element,
-  ariaLabel: string,
-  transform = "translate(-8px, -4px)"
-) =>
-  `<div style="transform: ${transform}" aria-label="${ariaLabel}" role="button">${renderToString(
-    icon
-  )}</div>`;
 
-function getOtherLocationIcon(
-  label: string,
-  isSelected: boolean,
-  icon = true
-): L.DivIcon {
-  return L.divIcon({
-    html: renderIcon(
-      <Badge variant={"white"} className="w-max whitespace-nowrap">
-        {label}
-      </Badge>,
-      label,
-      isSelected ? "translate(-10px, -20px)" : "translate(-15px, -20px)"
-    ),
-  });
-}
-
-function MapClickHandler({ onClick }: { onClick: () => void }) {
-  useMapEvents({
-    click: () => onClick(),
-  });
-  return null;
-}
-
-function MapController({
-  selectedLocation,
-}: Readonly<{
-  selectedLocation: Location | null;
-}>) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (selectedLocation) {
-      map.panTo([selectedLocation.lat, selectedLocation.lon], {
-        animate: true,
-        duration: 1.5,
-      });
-    }
-  }, [selectedLocation, map]);
-
-  return null;
-}
-
-export default function DiscoveryMap({
+export function DiscoveryMap({
   allFilteredData,
 }: Readonly<{ allFilteredData: any }>) {
   const [selectedLocation, setSelectedLocation] = useState<LocationType | null>(
@@ -166,15 +105,15 @@ export default function DiscoveryMap({
 
           {allFilteredData && allFilteredData.projects.length > 0
             ? allFilteredData.projects.map((project: projectListing) => (
-                <Marker
-                  position={[project.latitude, project.longitude]}
-                  key={project.id}
-                  icon={getOtherLocationIcon(
-                    project.name,
-                    selectedProperty?.id == project.id
-                  )}
-                />
-              ))
+              <Marker
+                position={[project.latitude, project.longitude]}
+                key={project.id}
+                icon={getOtherLocationIcon(
+                  project.name,
+                  selectedProperty?.id == project.id
+                )}
+              />
+            ))
             : null}
           {selectedLocation && selectedProperty && (
             <Popup
@@ -187,9 +126,8 @@ export default function DiscoveryMap({
               closeButton
             >
               <Link
-                href={`/property-for-sale-in/${selectedProperty.city.toLowerCase()}/${selectedProperty.slug.toLowerCase()}/${
-                  selectedProperty.id
-                }`}
+                href={`/property-for-sale-in/${selectedProperty.city.toLowerCase()}/${selectedProperty.slug.toLowerCase()}/${selectedProperty.id
+                  }`}
                 target="_blank"
               >
                 <div className="flex w-full flex-col gap-3">
@@ -202,7 +140,7 @@ export default function DiscoveryMap({
                     className={cn(
                       "aspect-video size-full rounded-lg object-cover transition-all duration-400 ease-in-out",
                       selectedProperty.projectStatus === "soldOut" &&
-                        "grayscale"
+                      "grayscale"
                     )}
                   />
                   <h3
@@ -292,3 +230,60 @@ export default function DiscoveryMap({
     </section>
   );
 }
+
+
+// keeping utilities functions below the main export
+
+export const renderIcon = (
+  icon: JSX.Element,
+  ariaLabel: string,
+  transform = "translate(-8px, -4px)"
+) =>
+  `<div style="transform: ${transform}" aria-label="${ariaLabel}" role="button">${renderToString(
+    icon
+  )}</div>`;
+
+function getOtherLocationIcon(
+  label: string,
+  isSelected: boolean,
+  icon = true
+): L.DivIcon {
+  return L.divIcon({
+    html: renderIcon(
+      <Badge variant={"white"} className="w-max whitespace-nowrap">
+        {label}
+      </Badge>,
+      label,
+      isSelected ? "translate(-10px, -20px)" : "translate(-15px, -20px)"
+    ),
+  });
+}
+
+function MapClickHandler({ onClick }: { onClick: () => void }) {
+  useMapEvents({
+    click: () => onClick(),
+  });
+  return null;
+}
+
+function MapController({
+  selectedLocation,
+}: Readonly<{
+  selectedLocation: Location | null;
+}>) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (selectedLocation) {
+      map.panTo([selectedLocation.lat, selectedLocation.lon], {
+        animate: true,
+        duration: 1.5,
+      });
+    }
+  }, [selectedLocation, map]);
+
+  return null;
+}
+
+
+
