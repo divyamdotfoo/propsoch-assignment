@@ -1,8 +1,8 @@
 import { Listings as ListingData } from "../data";
 import {
-    Listing,
-    SearchListingsParams,
-    SearchListingsResult,
+  Listing,
+  SearchListingsParams,
+  SearchListingsResult,
 } from "@/types/listing";
 
 /**
@@ -13,7 +13,6 @@ const simulateDbDelay = async (): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, randomDelay));
 };
 
-
 class ListingService {
   private readonly data: Listing[];
   private readonly PAGE_LIMIT = 10;
@@ -22,20 +21,21 @@ class ListingService {
     this.data = ListingData.projects as Listing[];
   }
 
-  async getTotalCount(){
+  async getTotalCount() {
     await simulateDbDelay();
     return this.data.length;
   }
 
-
   async getById(id: number): Promise<Listing | null> {
     await simulateDbDelay();
-    
-    const listing = this.data.find(l => l.id === id);
+
+    const listing = this.data.find((l) => l.id === id);
     return listing || null;
   }
 
-  async search(params: SearchListingsParams = {}): Promise<SearchListingsResult> {
+  async search(
+    params: SearchListingsParams = {}
+  ): Promise<SearchListingsResult> {
     const {
       city,
       micromarket,
@@ -55,7 +55,10 @@ class ListingService {
       }
 
       // Micromarket filter
-      if (micromarket && listing.micromarket.toLowerCase() !== micromarket.toLowerCase()) {
+      if (
+        micromarket &&
+        listing.micromarket.toLowerCase() !== micromarket.toLowerCase()
+      ) {
         return false;
       }
 
@@ -85,7 +88,7 @@ class ListingService {
     const totalPages = Math.ceil(totalListings / this.PAGE_LIMIT);
     const startIndex = (page - 1) * this.PAGE_LIMIT;
     const endIndex = startIndex + this.PAGE_LIMIT;
-    
+
     const listings = filtered.slice(startIndex, endIndex);
 
     return {

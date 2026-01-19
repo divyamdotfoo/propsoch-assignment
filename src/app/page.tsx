@@ -1,63 +1,36 @@
-import DiscoveryMapWrapper from "@/components/maps";
 import { listingService } from "@/server/services/property";
 import { Metadata } from "next";
-import {
-  generateWebApplicationSchema,
-  generateRealEstateAgentSchema,
-  generateWebSiteSchema,
-  generateBreadcrumbListSchema,
-} from "@/utils/json-ld";
+import { Navbar } from "@/components/navbar";
+import { ListingsGrid } from "@/components/listings/layout";
 
 export default async function Page() {
   const listingsResult = await listingService.search();
   const totalCount = await listingService.getTotalCount();
 
-  const webApplicationSchema = generateWebApplicationSchema(
-    totalCount
-  );
+  return (
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F7F7F7]">
+      <Navbar totalListings={totalCount} />
 
-  const realEstateAgentSchema = generateRealEstateAgentSchema(
-    listingsResult.listings
-  );
-  const webSiteSchema = generateWebSiteSchema();
-  const breadcrumbListSchema = generateBreadcrumbListSchema();
+      <main className="flex flex-1 overflow-hidden bg-[#F7F7F7]">
+        <div className="w-1/2 h-full overflow-hidden bg-white">
+          <ListingsGrid
+            listings={listingsResult.listings}
+            totalCount={totalCount}
+          />
+        </div>
 
-  return <>
-    {/* Structured Data (JSON-LD) */}
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        // escaping < characters as mentioned in nextjs docs to avoid XSS attacks
-        __html: JSON.stringify(webApplicationSchema).replace(/</g, "\\u003c"),
-      }}
-    />
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(realEstateAgentSchema).replace(
-          /</g,
-          "\\u003c"
-        ),
-      }}
-    />
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(webSiteSchema).replace(/</g, "\\u003c"),
-      }}
-    />
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(breadcrumbListSchema).replace(/</g, "\\u003c"),
-      }}
-    />
-
-    {/* Main app */}
-    <div className="w-screen h-screen">
-      <DiscoveryMapWrapper listings={listingsResult.listings} />
+        <div className="w-1/2 h-full sticky top-0 bg-white rounded-3xl m-4 flex items-center justify-center">
+          <div className="text-center p-6">
+            <div className="text-6xl mb-4">🗺️</div>
+            <p className="text-gray-500 text-lg font-medium">Map Container</p>
+            <p className="text-gray-400 text-sm mt-1">
+              Map component will be rendered here
+            </p>
+          </div>
+        </div>
+      </main>
     </div>
-  </>;
+  );
 }
 
 export async function generateMetadata(): Promise<Metadata> {

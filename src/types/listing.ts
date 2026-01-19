@@ -74,4 +74,3 @@ export interface LocationType {
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
-

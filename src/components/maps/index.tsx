@@ -3,21 +3,21 @@ import { Listing } from "@/types/listing";
 import dynamic from "next/dynamic";
 
 const DiscoveryMap = dynamic(
-    () => import("./discovery-map").then((mod) => mod.DiscoveryMap),
-    {
-        ssr: false,
-        loading: () => {
-            return <div>Loading...</div>;
-        },
-    }
+  () => import("./discovery-map").then((mod) => mod.DiscoveryMap),
+  {
+    ssr: false,
+    loading: () => {
+      return <div>Loading...</div>;
+    },
+  }
 );
 
 type DiscoveryMapWrapperProps = {
-    listings: Listing[];
+  listings: Listing[];
 };
 
 export default function DiscoveryMapWrapper({
-    listings,
+  listings,
 }: DiscoveryMapWrapperProps) {
-    return <DiscoveryMap listings={listings} />;
+  return <DiscoveryMap listings={listings} />;
 }
