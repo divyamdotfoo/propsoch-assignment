@@ -22,6 +22,11 @@ class ListingService {
     this.data = ListingData.projects as Listing[];
   }
 
+  async getTotalCount(){
+    await simulateDbDelay();
+    return this.data.length;
+  }
+
 
   async getById(id: number): Promise<Listing | null> {
     await simulateDbDelay();

@@ -41,15 +41,12 @@ interface DiscoveryMapProps {
   listings: Listing[];
 }
 
-export function DiscoveryMap({
-  listings,
-}: Readonly<DiscoveryMapProps>) {
+export function DiscoveryMap({ listings }: Readonly<DiscoveryMapProps>) {
   const [selectedLocation, setSelectedLocation] = useState<LocationType | null>(
     null
   );
   const sectionRef = useRef(null);
-  const [selectedListing, setSelectedListing] =
-    useState<Listing | null>(null);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
   useEffect(() => {
     if (selectedLocation) {
@@ -108,15 +105,15 @@ export function DiscoveryMap({
 
           {listings && listings.length > 0
             ? listings.map((listing: Listing) => (
-              <Marker
-                position={[listing.latitude, listing.longitude]}
-                key={listing.id}
-                icon={getOtherLocationIcon(
-                  listing.name,
-                  selectedListing?.id == listing.id
-                )}
-              />
-            ))
+                <Marker
+                  position={[listing.latitude, listing.longitude]}
+                  key={listing.id}
+                  icon={getOtherLocationIcon(
+                    listing.name,
+                    selectedListing?.id == listing.id
+                  )}
+                />
+              ))
             : null}
           {selectedLocation && selectedListing && (
             <Popup
@@ -129,8 +126,9 @@ export function DiscoveryMap({
               closeButton
             >
               <Link
-                href={`/property-for-sale-in/${selectedListing.city.toLowerCase()}/${selectedListing.slug.toLowerCase()}/${selectedListing.id
-                  }`}
+                href={`/property-for-sale-in/${selectedListing.city.toLowerCase()}/${selectedListing.slug.toLowerCase()}/${
+                  selectedListing.id
+                }`}
                 target="_blank"
               >
                 <div className="flex w-full flex-col gap-3">
@@ -142,8 +140,7 @@ export function DiscoveryMap({
                     loading="lazy"
                     className={cn(
                       "aspect-video size-full rounded-lg object-cover transition-all duration-400 ease-in-out",
-                      selectedListing.projectStatus === "soldOut" &&
-                      "grayscale"
+                      selectedListing.projectStatus === "soldOut" && "grayscale"
                     )}
                   />
                   <h3
