@@ -1,4 +1,4 @@
-import { IconSvgProps } from "@/types/types";
+import { IconSvgProps } from "@/types/listing";
 
 export const ShareIcon: React.FC<IconSvgProps> = ({
   size,

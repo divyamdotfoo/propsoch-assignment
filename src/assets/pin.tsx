@@ -1,4 +1,4 @@
-import { IconSvgProps } from "@/types/types";
+import { IconSvgProps } from "@/types/listing";
 
 export const Pin: React.FC<IconSvgProps> = ({
   size,

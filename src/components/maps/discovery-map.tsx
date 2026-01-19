@@ -27,7 +27,7 @@ import { HouseIcon } from "@/assets/house-icon";
 import { LocationIcon } from "@/assets/location-icon";
 import { CalendarIcon } from "@/assets/utility";
 import L from "leaflet";
-import { LocationType, projectListing } from "@/types/types";
+import { LocationType, Listing } from "@/types/listing";
 import { Badge } from "../badge";
 import { renderToString } from "react-dom/server";
 
@@ -37,22 +37,26 @@ interface Location {
   name: string;
 }
 
+interface DiscoveryMapProps {
+  listings: Listing[];
+}
+
 export function DiscoveryMap({
-  allFilteredData,
-}: Readonly<{ allFilteredData: any }>) {
+  listings,
+}: Readonly<DiscoveryMapProps>) {
   const [selectedLocation, setSelectedLocation] = useState<LocationType | null>(
     null
   );
   const sectionRef = useRef(null);
-  const [selectedProperty, setSelectedProperty] =
-    useState<projectListing | null>(null);
+  const [selectedListing, setSelectedListing] =
+    useState<Listing | null>(null);
 
   useEffect(() => {
     if (selectedLocation) {
-      const found = allFilteredData.projects.find(
-        (prop: projectListing) => prop.name == selectedLocation.name
+      const found = listings.find(
+        (listing: Listing) => listing.name == selectedLocation.name
       );
-      setSelectedProperty(found);
+      setSelectedListing(found || null);
       const el = document.querySelector(
         `[data-marker-id="${selectedLocation.name}"]`
       ) as HTMLElement | null;
@@ -60,7 +64,7 @@ export function DiscoveryMap({
         el.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }
-  }, [selectedLocation]);
+  }, [selectedLocation, listings]);
 
   return (
     <section
@@ -102,19 +106,19 @@ export function DiscoveryMap({
 
           {/* Project Location Marker */}
 
-          {allFilteredData && allFilteredData.projects.length > 0
-            ? allFilteredData.projects.map((project: projectListing) => (
-                <Marker
-                  position={[project.latitude, project.longitude]}
-                  key={project.id}
-                  icon={getOtherLocationIcon(
-                    project.name,
-                    selectedProperty?.id == project.id
-                  )}
-                />
-              ))
+          {listings && listings.length > 0
+            ? listings.map((listing: Listing) => (
+              <Marker
+                position={[listing.latitude, listing.longitude]}
+                key={listing.id}
+                icon={getOtherLocationIcon(
+                  listing.name,
+                  selectedListing?.id == listing.id
+                )}
+              />
+            ))
             : null}
-          {selectedLocation && selectedProperty && (
+          {selectedLocation && selectedListing && (
             <Popup
               position={[selectedLocation.lat, selectedLocation.lon]}
               autoClose={false}
@@ -125,22 +129,21 @@ export function DiscoveryMap({
               closeButton
             >
               <Link
-                href={`/property-for-sale-in/${selectedProperty.city.toLowerCase()}/${selectedProperty.slug.toLowerCase()}/${
-                  selectedProperty.id
-                }`}
+                href={`/property-for-sale-in/${selectedListing.city.toLowerCase()}/${selectedListing.slug.toLowerCase()}/${selectedListing.id
+                  }`}
                 target="_blank"
               >
                 <div className="flex w-full flex-col gap-3">
                   <Image
-                    src={selectedProperty.image}
-                    alt={selectedProperty.alt}
+                    src={selectedListing.image}
+                    alt={selectedListing.alt}
                     width={500}
                     height={500}
                     loading="lazy"
                     className={cn(
                       "aspect-video size-full rounded-lg object-cover transition-all duration-400 ease-in-out",
-                      selectedProperty.projectStatus === "soldOut" &&
-                        "grayscale"
+                      selectedListing.projectStatus === "soldOut" &&
+                      "grayscale"
                     )}
                   />
                   <h3
@@ -149,7 +152,7 @@ export function DiscoveryMap({
                       "font-semibold"
                     )}
                   >
-                    {selectedProperty.name}
+                    {selectedListing.name}
                   </h3>
 
                   <div className="flex flex-col gap-3 whitespace-nowrap">
@@ -161,7 +164,7 @@ export function DiscoveryMap({
                         )}
                       >
                         <LocationIcon width={20} height={20} />
-                        <span>{selectedProperty.micromarket}</span>
+                        <span>{selectedListing.micromarket}</span>
                       </span>
                       <span
                         className={cn(
@@ -170,7 +173,7 @@ export function DiscoveryMap({
                         )}
                       >
                         <PropscoreRating
-                          rating={selectedProperty.propscore}
+                          rating={selectedListing.propscore}
                           width={110}
                           height={24}
                           className={"ml-auto w-max max-w-40"}
@@ -185,8 +188,8 @@ export function DiscoveryMap({
                         )}
                       >
                         <BudgetIcon width={20} height={20} />
-                        {formatPrice(selectedProperty.minPrice, false)} -{" "}
-                        {formatPrice(selectedProperty.maxPrice, false)}
+                        {formatPrice(selectedListing.minPrice, false)} -{" "}
+                        {formatPrice(selectedListing.maxPrice, false)}
                       </span>
                       <span
                         className={cn(
@@ -195,7 +198,7 @@ export function DiscoveryMap({
                         )}
                       >
                         <CalendarIcon height={20} width={20} />
-                        {formatDate(selectedProperty.possessionDate)}
+                        {formatDate(selectedListing.possessionDate)}
                       </span>
                     </div>
                     <div className="flex w-full items-center justify-between gap-3">
@@ -207,7 +210,7 @@ export function DiscoveryMap({
                       >
                         <HouseIcon width={20} height={20} />
                         <span className="w-32 max-w-32 truncate">
-                          {concatenateTypologies(selectedProperty.typologies)}
+                          {concatenateTypologies(selectedListing.typologies)}
                         </span>
                       </span>
                       <span
@@ -216,8 +219,8 @@ export function DiscoveryMap({
                           "flex w-full items-center justify-end gap-2"
                         )}
                       >
-                        {selectedProperty.minSaleableArea} -{" "}
-                        {selectedProperty.maxSaleableArea} sqft
+                        {selectedListing.minSaleableArea} -{" "}
+                        {selectedListing.maxSaleableArea} sqft
                       </span>
                     </div>
                   </div>

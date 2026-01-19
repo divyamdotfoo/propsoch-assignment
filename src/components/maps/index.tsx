@@ -1,4 +1,5 @@
 "use client";
+import { Listing } from "@/types/listing";
 import dynamic from "next/dynamic";
 
 const DiscoveryMap = dynamic(
@@ -12,11 +13,11 @@ const DiscoveryMap = dynamic(
 );
 
 type DiscoveryMapWrapperProps = {
-    allFilteredData: any;
+    listings: Listing[];
 };
 
 export default function DiscoveryMapWrapper({
-    allFilteredData,
+    listings,
 }: DiscoveryMapWrapperProps) {
-    return <DiscoveryMap allFilteredData={allFilteredData} />;
+    return <DiscoveryMap listings={listings} />;
 }
