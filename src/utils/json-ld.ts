@@ -22,9 +22,7 @@ import type { Listing } from "@/types/listing";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
 const SITE_NAME = "PlotPirate";
 
-export function generateWebApplicationSchema(
-  totalListings: number
-): WithContext<WebApplication> {
+export function generateWebApplicationSchema(): WithContext<WebApplication> {
   return {
     "@context": "https://schema.org",
     "@type": "WebApplication",
@@ -41,7 +39,7 @@ export function generateWebApplicationSchema(
       ratingValue: "4.5",
       ratingCount: "1000",
     } as AggregateRating,
-    description: `Discover ${totalListings}+ premium properties across India on ${SITE_NAME}'s interactive discovery map.`,
+    description: `Discover 100+ premium properties across India on ${SITE_NAME}'s interactive discovery map.`,
     url: SITE_URL,
     sameAs: [
       "https://www.facebook.com/plotpirate",

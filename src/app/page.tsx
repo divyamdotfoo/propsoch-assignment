@@ -1,31 +1,47 @@
-import { listingService } from "@/server/services/property";
+import { listingService } from "@/server/services/listings";
 import { Metadata } from "next";
+import { ListingsGrid } from "@/components/listings-grid";
 import { Navbar } from "@/components/navbar";
-import { ListingsGrid } from "@/components/listings/layout";
 
 export default async function Page() {
-  const listingsResult = await listingService.search();
-  const totalCount = await listingService.getTotalCount();
+  const [listingsResult, totalCount, listingTypes, micromarkets, priceRange] = await Promise.all([
+    listingService.search(),
+    listingService.getTotalCount(),
+    listingService.getUniqueListingTypes(),
+    listingService.getUniqueMicromarkets(),
+    listingService.getPriceRange(),
+  ]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F7F7F7]">
-      <Navbar totalListings={totalCount} />
+    <div className="flex flex-col min-h-screen">
+      <Navbar 
+        listingTypes={listingTypes}
+        micromarkets={micromarkets}
+        priceRange={priceRange}
+      />
 
-      <main className="flex flex-1 overflow-hidden bg-[#F7F7F7]">
-        <div className="w-1/2 h-full overflow-hidden bg-white">
+      <main className="flex flex-1 bg-[#F7F7F7]">
+        {/* Left Side - Listings Grid (Scrollable) */}
+        <div className="w-1/2 bg-white">
           <ListingsGrid
             listings={listingsResult.listings}
             totalCount={totalCount}
+            totalPages={listingsResult.totalPages}
+            currentPage={listingsResult.currentPage}
+            totalListings={listingsResult.totalListings}
           />
         </div>
 
-        <div className="w-1/2 h-full sticky top-0 bg-white rounded-3xl m-4 flex items-center justify-center">
-          <div className="text-center p-6">
-            <div className="text-6xl mb-4">🗺️</div>
-            <p className="text-gray-500 text-lg font-medium">Map Container</p>
-            <p className="text-gray-400 text-sm mt-1">
-              Map component will be rendered here
-            </p>
+        {/* Right Side - Map (Sticky) */}
+        <div className="w-1/2 h-[calc(100vh-65px)] sticky top-[65px] pt-6 pr-6 pb-6 pl-4">
+          <div className="w-full h-full bg-white rounded-3xl flex items-center justify-center">
+            <div className="text-center p-6">
+              <div className="text-6xl mb-4">🗺️</div>
+              <p className="text-gray-500 text-lg font-medium">Map Container</p>
+              <p className="text-gray-400 text-sm mt-1">
+                Map component will be rendered here
+              </p>
+            </div>
           </div>
         </div>
       </main>

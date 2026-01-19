@@ -9,7 +9,7 @@ import {
  * Simulate database delay (200-300ms)
  */
 const simulateDbDelay = async (): Promise<void> => {
-  const randomDelay = 200 + Math.random() * 100;
+  const randomDelay = 500 + Math.random() * 300;
   await new Promise((resolve) => setTimeout(resolve, randomDelay));
 };
 
@@ -24,6 +24,29 @@ class ListingService {
   async getTotalCount() {
     await simulateDbDelay();
     return this.data.length;
+  }
+
+  async getUniqueListingTypes(): Promise<string[]> {
+    await simulateDbDelay();
+    const typesSet = new Set(this.data.map((listing) => listing.type));
+    const types = Array.from(typesSet);
+    return types.sort();
+  }
+
+  async getUniqueMicromarkets(): Promise<string[]> {
+    await simulateDbDelay();
+    const micromarketsSet = new Set(this.data.map((listing) => listing.micromarket));
+    const micromarkets = Array.from(micromarketsSet);
+    return micromarkets.sort();
+  }
+
+  async getPriceRange(): Promise<{ min: number; max: number }> {
+    await simulateDbDelay();
+    const prices = this.data.flatMap((listing) => [listing.minPrice, listing.maxPrice]);
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
   }
 
   async getById(id: number): Promise<Listing | null> {

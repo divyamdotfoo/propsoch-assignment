@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { listingService } from "@/server/services/property";
 import {
   generateWebApplicationSchema,
   generateWebSiteSchema,
@@ -28,32 +27,33 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const totalCount = await listingService.getTotalCount();
-
-  const webApplicationSchema = generateWebApplicationSchema(totalCount);
+  const webApplicationSchema = generateWebApplicationSchema();
   const webSiteSchema = generateWebSiteSchema();
   const breadcrumbListSchema = generateBreadcrumbListSchema();
   return (
     <html lang="en">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          // escaping < characters as mentioned in nextjs docs to avoid XSS attacks
-          __html: JSON.stringify(webApplicationSchema).replace(/</g, "\\u003c"),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(webSiteSchema).replace(/</g, "\\u003c"),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbListSchema).replace(/</g, "\\u003c"),
-        }}
-      />
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            // escaping < characters as mentioned in nextjs docs to avoid XSS attacks
+            __html: JSON.stringify(webApplicationSchema).replace(/</g, "\\u003c"),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(webSiteSchema).replace(/</g, "\\u003c"),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumbListSchema).replace(/</g, "\\u003c"),
+          }}
+        />
+      </head>
+
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
