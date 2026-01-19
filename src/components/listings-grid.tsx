@@ -8,29 +8,22 @@ import {
 } from "@/utils/helpers";
 import Image from "next/image";
 import { Pagination, PaginationInfo } from "./ui/pagination";
+import { useListings } from "@/contexts/listings";
+import { CardSkeleton } from "./card-skeleton";
 
 type ListingsGridProps = {
-    listings: Listing[];
     totalCount?: number;
-    totalPages?: number;
-    currentPage?: number;
-    totalListings?: number;
 };
 
 const ITEMS_PER_PAGE = 10;
 
-export function ListingsGrid({
-    listings,
-    totalCount,
-    totalPages = 1,
-    currentPage = 1,
-    totalListings = 0,
-}: ListingsGridProps) {
+export function ListingsGrid({ totalCount }: ListingsGridProps) {
+    const { listingsState, isLoading, setPage } = useListings();
+    const { listings, totalPages, currentPage, totalListings } = listingsState;
+
     const handlePageChange = (page: number) => {
-        console.log("Page changed to:", page);
-        // Scroll to top of listings
+        setPage(page);
         window.scrollTo({ top: 0, behavior: "smooth" });
-        // TODO: Implement actual page change logic with URL params
     };
 
     return (
@@ -40,13 +33,15 @@ export function ListingsGrid({
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-lg font-semibold text-gray-900">
-                            {totalCount !== undefined
-                                ? `${totalCount.toLocaleString()} listings available`
-                                : `${listings.length} listings`}
+                            {isLoading
+                                ? "Searching..."
+                                : totalListings > 0
+                                    ? `${totalListings.toLocaleString()} listings found`
+                                    : "No listings found"}
                         </h2>
                         <p className="text-sm text-gray-500 mt-0.5">in Bengaluru</p>
                     </div>
-                    {totalListings > 0 && (
+                    {!isLoading && totalListings > 0 && (
                         <PaginationInfo
                             currentPage={currentPage}
                             pageSize={ITEMS_PER_PAGE}
@@ -58,39 +53,51 @@ export function ListingsGrid({
 
             {/* Grid */}
             <div className="px-6 py-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {listings.map((listing) => (
-                        <ListingCard key={listing.id} listing={listing} />
-                    ))}
-                </div>
-
-                {/* Empty State */}
-                {listings.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <svg
-                            width="64"
-                            height="64"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            className="text-gray-300 mb-4"
-                        >
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                            <polyline points="9 22 9 12 15 12 15 22" />
-                        </svg>
-                        <p className="text-gray-500 text-lg font-medium">
-                            No listings found
+                {isLoading ? (
+                    // Show skeletons during loading
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <CardSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : listings.length > 0 ? (
+                    // Show listings
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {listings.map((listing) => (
+                            <ListingCard key={listing.id} listing={listing} />
+                        ))}
+                    </div>
+                ) : (
+                    // Empty State
+                    <div className="flex flex-col items-center justify-center py-16">
+                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <svg
+                                width="40"
+                                height="40"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                className="text-gray-400"
+                            >
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                                <path d="M8 11h6" />
+                            </svg>
+                        </div>
+                        <p className="text-gray-900 text-lg font-semibold">
+                            Oops! No matches found
                         </p>
-                        <p className="text-gray-400 text-sm mt-1">
-                            Try adjusting your search criteria
+                        <p className="text-gray-500 text-sm mt-1 text-center max-w-sm">
+                            We couldn&apos;t find any listings matching your criteria. Try adjusting
+                            your filters or search terms.
                         </p>
                     </div>
                 )}
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
+            {!isLoading && totalPages > 1 && (
                 <div className="px-6 py-8 border-t border-gray-200 mb-20 bg-white">
                     <Pagination
                         currentPage={currentPage}
@@ -102,7 +109,6 @@ export function ListingsGrid({
         </div>
     );
 }
-
 
 type ListingCardProps = {
     listing: Listing;
@@ -138,7 +144,7 @@ function ListingCard({ listing }: ListingCardProps) {
     return (
         <article className="group cursor-pointer">
             {/* Image Container */}
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+            <div className="relative aspect-4/3 overflow-hidden rounded-xl bg-gray-100">
                 <Image
                     src={image}
                     alt={alt}
@@ -212,6 +218,3 @@ function ListingCard({ listing }: ListingCardProps) {
         </article>
     );
 }
-
-
-

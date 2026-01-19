@@ -2,10 +2,20 @@ import { listingService } from "@/server/services/listings";
 import { Metadata } from "next";
 import { ListingsGrid } from "@/components/listings-grid";
 import { Navbar } from "@/components/navbar";
+import { ListingsProvider } from "@/contexts/listings";
+import { parseSearchParams, parseToServiceParams } from "@/utils/search-params";
 
-export default async function Page() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function Page({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+  const initialFilters = parseSearchParams(resolvedSearchParams);
+  const serviceParams = parseToServiceParams(resolvedSearchParams);
+
   const [listingsResult, totalCount, listingTypes, micromarkets, priceRange] = await Promise.all([
-    listingService.search(),
+    listingService.search(serviceParams),
     listingService.getTotalCount(),
     listingService.getUniqueListingTypes(),
     listingService.getUniqueMicromarkets(),
@@ -13,39 +23,41 @@ export default async function Page() {
   ]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar 
-        listingTypes={listingTypes}
-        micromarkets={micromarkets}
-        priceRange={priceRange}
-      />
+    <ListingsProvider
+      initialListings={listingsResult.listings}
+      initialTotalPages={listingsResult.totalPages}
+      initialCurrentPage={listingsResult.currentPage}
+      initialTotalListings={listingsResult.totalListings}
+      initialFilters={initialFilters}
+    >
+      <div className="flex flex-col min-h-screen">
+        <Navbar
+          listingTypes={listingTypes}
+          micromarkets={micromarkets}
+          priceRange={priceRange}
+        />
 
-      <main className="flex flex-1 bg-[#F7F7F7]">
-        {/* Left Side - Listings Grid (Scrollable) */}
-        <div className="w-1/2 bg-white">
-          <ListingsGrid
-            listings={listingsResult.listings}
-            totalCount={totalCount}
-            totalPages={listingsResult.totalPages}
-            currentPage={listingsResult.currentPage}
-            totalListings={listingsResult.totalListings}
-          />
-        </div>
+        <main className="flex flex-1 bg-[#F7F7F7]">
+          {/* Left Side - Listings Grid (Scrollable) */}
+          <div className="w-1/2 bg-white">
+            <ListingsGrid totalCount={totalCount} />
+          </div>
 
-        {/* Right Side - Map (Sticky) */}
-        <div className="w-1/2 h-[calc(100vh-65px)] sticky top-[65px] pt-6 pr-6 pb-6 pl-4">
-          <div className="w-full h-full bg-white rounded-3xl flex items-center justify-center">
-            <div className="text-center p-6">
-              <div className="text-6xl mb-4">🗺️</div>
-              <p className="text-gray-500 text-lg font-medium">Map Container</p>
-              <p className="text-gray-400 text-sm mt-1">
-                Map component will be rendered here
-              </p>
+          {/* Right Side - Map (Sticky) */}
+          <div className="w-1/2 h-[calc(100vh-65px)] sticky top-[65px] pt-6 pr-6 pb-6 pl-4">
+            <div className="w-full h-full bg-white rounded-3xl flex items-center justify-center">
+              <div className="text-center p-6">
+                <div className="text-6xl mb-4">🗺️</div>
+                <p className="text-gray-500 text-lg font-medium">Map Container</p>
+                <p className="text-gray-400 text-sm mt-1">
+                  Map component will be rendered here
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </ListingsProvider>
   );
 }
 
