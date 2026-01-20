@@ -8,6 +8,7 @@ import {
   LayersControl,
   MapContainer,
   Marker,
+  Popup,
   TileLayer,
   useMap,
   useMapEvents,
@@ -16,7 +17,6 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import { Listing, MapBounds } from "@/types/listing";
 import { formatPrice } from "@/utils/helpers";
-import { renderToString } from "react-dom/server";
 
 interface DiscoveryMapProps {
   listings: Listing[];
@@ -25,9 +25,41 @@ interface DiscoveryMapProps {
   initialBounds?: MapBounds | null;
 }
 
-// Default center for Bengaluru
 const DEFAULT_CENTER: [number, number] = [12.97, 77.59];
 const DEFAULT_ZOOM = 12;
+
+const mapStyles = `
+  .custom-price-marker {
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  .custom-price-marker:hover {
+    transform: scale(1.12);
+    z-index: 1000 !important;
+  }
+  .custom-price-marker:hover .price-tag {
+    background-color: #1a1a1a !important;
+    color: white !important;
+    border-color: #1a1a1a !important;
+  }
+  .custom-cluster-icon {
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  .custom-cluster-icon:hover {
+    transform: scale(1.1);
+    z-index: 1000 !important;
+  }
+  .leaflet-popup-content-wrapper {
+    padding: 0 !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
+  }
+  .leaflet-popup-content { margin: 0 !important; width: 280px !important; }
+  .leaflet-popup-tip-container { display: none; }
+  .leaflet-popup-close-button { display: none !important; }
+`;
 
 export function DiscoveryMap({
   listings,
@@ -35,7 +67,6 @@ export function DiscoveryMap({
   isLoading,
   initialBounds,
 }: Readonly<DiscoveryMapProps>) {
-  // Calculate initial center and bounds from URL params if available
   const { center, bounds } = useMemo(() => {
     if (initialBounds) {
       const centerLat = (initialBounds.swLat + initialBounds.neLat) / 2;
@@ -53,11 +84,11 @@ export function DiscoveryMap({
 
   return (
     <section
-      style={{ fontFamily: "Arial, sans-serif" }}
-      className="flex aspect-auto h-full flex-col overflow-hidden relative"
+      className="flex aspect-auto h-full flex-col overflow-hidden relative font-sans"
       aria-label="Property discovery via map"
     >
-      {/* Top center loading indicator like Airbnb */}
+      <style>{mapStyles}</style>
+
       {isLoading && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000">
           <div className="bg-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2">
@@ -69,7 +100,6 @@ export function DiscoveryMap({
         </div>
       )}
 
-      {/* Map Container */}
       <div className="relative size-full overflow-hidden rounded-2xl">
         <MapContainer
           center={center}
@@ -78,7 +108,6 @@ export function DiscoveryMap({
           scrollWheelZoom={true}
           dragging={true}
           touchZoom={true}
-          // Fix laggy zoom - one scroll = one zoom level
           wheelDebounceTime={150}
           wheelPxPerZoomLevel={120}
           zoomSnap={1}
@@ -93,7 +122,6 @@ export function DiscoveryMap({
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
             </LayersControl.BaseLayer>
-
             <LayersControl.BaseLayer name="Satellite View">
               <TileLayer
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -107,7 +135,6 @@ export function DiscoveryMap({
             initialBounds={initialBounds}
           />
 
-          {/* Clustered listing markers */}
           <MarkerClusterGroup
             chunkedLoading
             iconCreateFunction={createClusterIcon}
@@ -118,11 +145,7 @@ export function DiscoveryMap({
             disableClusteringAtZoom={16}
           >
             {listings.map((listing) => (
-              <Marker
-                key={listing.id}
-                position={[listing.latitude, listing.longitude]}
-                icon={createPriceIcon(listing.minPrice)}
-              />
+              <ListingMarker key={listing.id} listing={listing} />
             ))}
           </MarkerClusterGroup>
         </MapContainer>
@@ -131,9 +154,194 @@ export function DiscoveryMap({
   );
 }
 
-/**
- * Component to handle map bounds changes
- */
+// Popup dimensions
+const POPUP_WIDTH = 280;
+const POPUP_HEIGHT = 270;
+const MARGIN = 20;
+
+function ListingMarker({ listing }: { listing: Listing }) {
+  const map = useMap();
+  const markerRef = useRef<L.Marker>(null);
+  const popupRef = useRef<L.Popup>(null);
+
+  // Reposition popup after it opens
+  useEffect(() => {
+    const marker = markerRef.current;
+    if (!marker || !map) return;
+
+    const repositionPopup = () => {
+      // Small delay to ensure popup is fully rendered
+      requestAnimationFrame(() => {
+        const popup = marker.getPopup();
+        if (!popup) return;
+
+        const popupEl = popup.getElement();
+        if (!popupEl) return;
+
+        // Get marker position in container pixels
+        const markerLatLng = marker.getLatLng();
+        const markerPoint = map.latLngToContainerPoint(markerLatLng);
+        const mapContainer = map.getContainer();
+        const containerRect = mapContainer.getBoundingClientRect();
+
+        // Get actual popup dimensions after render
+        const popupRect = popupEl.getBoundingClientRect();
+        const actualPopupHeight = popupRect.height || POPUP_HEIGHT;
+        const actualPopupWidth = popupRect.width || POPUP_WIDTH;
+
+        // Available space in each direction
+        const spaceAbove = markerPoint.y;
+        const spaceBelow = containerRect.height - markerPoint.y;
+        const spaceLeft = markerPoint.x;
+        const spaceRight = containerRect.width - markerPoint.x;
+
+        // Get the wrapper element (the one Leaflet positions)
+        const wrapper = popupEl.querySelector(
+          ".leaflet-popup-content-wrapper"
+        ) as HTMLElement;
+        if (!wrapper) return;
+
+        // Reset any previous transforms
+        wrapper.style.transform = "";
+
+        let translateY = 0;
+        let translateX = 0;
+
+        // Vertical positioning: flip to below if not enough space above
+        if (
+          spaceAbove < actualPopupHeight + MARGIN &&
+          spaceBelow > spaceAbove
+        ) {
+          translateY = actualPopupHeight + 25; // Move below marker
+        }
+
+        // Horizontal positioning: shift if too close to edges
+        const halfWidth = actualPopupWidth / 2;
+        if (spaceLeft < halfWidth + MARGIN) {
+          translateX = halfWidth - spaceLeft + MARGIN;
+        } else if (spaceRight < halfWidth + MARGIN) {
+          translateX = -(halfWidth - spaceRight + MARGIN);
+        }
+
+        // Apply transform to content wrapper
+        if (translateX !== 0 || translateY !== 0) {
+          wrapper.style.transform = `translate(${translateX}px, ${translateY}px)`;
+        }
+      });
+    };
+
+    marker.on("popupopen", repositionPopup);
+
+    return () => {
+      marker.off("popupopen", repositionPopup);
+    };
+  }, [map]);
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={[listing.latitude, listing.longitude]}
+      icon={createPriceIcon(listing.minPrice)}
+    >
+      <Popup
+        ref={popupRef}
+        offset={[0, -5]}
+        autoPan={false}
+        closeButton={false}
+        minWidth={280}
+        maxWidth={280}
+      >
+        <ListingPopup
+          listing={listing}
+          onClose={() => markerRef.current?.closePopup()}
+        />
+      </Popup>
+    </Marker>
+  );
+}
+
+function ListingPopup({
+  listing,
+  onClose,
+}: {
+  listing: Listing;
+  onClose: () => void;
+}) {
+  const minPrice = formatPrice(listing.minPrice, false);
+  const maxPrice = formatPrice(listing.maxPrice, false);
+
+  return (
+    <div className="font-sans">
+      {/* Image */}
+      <div className="relative overflow-hidden">
+        <img
+          src={listing.image}
+          alt={listing.alt}
+          className="w-full h-40 object-cover block hover:scale-[1.02] transition-transform duration-300"
+        />
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+          aria-label="Close"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#222"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <span className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-[11px] font-semibold uppercase tracking-wide">
+          {listing.type}
+        </span>
+      </div>
+
+      {/* Content */}
+      <div className="p-3">
+        <div className="flex justify-between items-start mb-1">
+          <span className="text-sm font-semibold text-gray-900">
+            {listing.type} in {listing.micromarket}
+          </span>
+          <div className="flex items-center gap-1 ml-2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#222">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            <span className="text-[13px] font-medium">
+              {listing.propscore.toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        <p className="text-[13px] text-gray-500 mb-1.5 truncate">
+          {listing.name}
+        </p>
+
+        <p className="text-xs text-gray-500 mb-2">
+          {listing.typologies.join(", ")} •{" "}
+          {listing.minSaleableArea.toLocaleString()} -{" "}
+          {listing.maxSaleableArea.toLocaleString()} sq.ft
+        </p>
+
+        <p className="text-[15px] font-semibold text-gray-900">
+          ₹{minPrice}
+          {listing.minPrice !== listing.maxPrice && (
+            <span className="text-gray-500 font-normal"> - </span>
+          )}
+          {listing.minPrice !== listing.maxPrice && `₹${maxPrice}`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function MapBoundsHandler({
   onBoundsChange,
   initialBounds,
@@ -146,16 +354,12 @@ function MapBoundsHandler({
   const isFirstLoad = useRef(true);
 
   const handleBoundsChange = useCallback(() => {
-    // Debounce the bounds change to avoid too many API calls
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     timeoutRef.current = setTimeout(() => {
       const bounds = map.getBounds();
       const sw = bounds.getSouthWest();
       const ne = bounds.getNorthEast();
-
       onBoundsChange({
         swLat: sw.lat,
         swLng: sw.lng,
@@ -165,16 +369,13 @@ function MapBoundsHandler({
     }, 300);
   }, [map, onBoundsChange]);
 
-  // Set initial bounds from URL when map loads
   useEffect(() => {
     if (isFirstLoad.current && initialBounds) {
-      // Fit map to initial bounds from URL
       map.fitBounds([
         [initialBounds.swLat, initialBounds.swLng],
         [initialBounds.neLat, initialBounds.neLng],
       ]);
       isFirstLoad.current = false;
-      // Trigger bounds change to sync state
       handleBoundsChange();
     } else if (isFirstLoad.current) {
       isFirstLoad.current = false;
@@ -182,81 +383,25 @@ function MapBoundsHandler({
     }
   }, [map, initialBounds, handleBoundsChange]);
 
-  // Listen to map events
-  useMapEvents({
-    moveend: handleBoundsChange,
-    zoomend: handleBoundsChange,
-  });
+  useMapEvents({ moveend: handleBoundsChange, zoomend: handleBoundsChange });
 
   return null;
 }
 
-/**
- * Create a custom cluster icon showing count
- */
 function createClusterIcon(cluster: {
   getChildCount: () => number;
 }): L.DivIcon {
-  const count = cluster.getChildCount();
-
-  const iconHtml = renderToString(
-    <div
-      style={{
-        backgroundColor: "white",
-        padding: "8px 12px",
-        borderRadius: "20px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-        fontSize: "13px",
-        fontWeight: "700",
-        color: "#1a1a1a",
-        whiteSpace: "nowrap",
-        border: "2px solid #e5e5e5",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: "40px",
-      }}
-    >
-      {count}
-    </div>
-  );
-
   return L.divIcon({
-    html: iconHtml,
+    html: `<div style="background:white;padding:8px 12px;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-size:13px;font-weight:700;color:#1a1a1a;border:2px solid #e5e5e5;display:flex;align-items:center;justify-content:center;min-width:40px">${cluster.getChildCount()}</div>`,
     className: "custom-cluster-icon",
     iconSize: [50, 36],
     iconAnchor: [25, 18],
   });
 }
 
-/**
- * Create a price tag icon for map markers
- */
 function createPriceIcon(price: number): L.DivIcon {
-  const formattedPrice = `₹${formatPrice(price, false)}`;
-
-  const iconHtml = renderToString(
-    <div className="price-marker">
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "6px 10px",
-          borderRadius: "20px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-          fontSize: "13px",
-          fontWeight: "600",
-          color: "#1a1a1a",
-          whiteSpace: "nowrap",
-          border: "1px solid #e5e5e5",
-        }}
-      >
-        {formattedPrice}
-      </div>
-    </div>
-  );
-
   return L.divIcon({
-    html: iconHtml,
+    html: `<div class="price-tag" style="background:white;padding:6px 10px;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:13px;font-weight:600;color:#1a1a1a;border:1px solid #e5e5e5;transition:all .15s cubic-bezier(.4,0,.2,1)">₹${formatPrice(price, false)}</div>`,
     className: "custom-price-marker",
     iconSize: [80, 30],
     iconAnchor: [40, 15],

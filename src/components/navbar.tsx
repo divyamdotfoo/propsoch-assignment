@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect, useRef } from "react";
 import {
   Search,
@@ -30,7 +29,6 @@ import {
 import { Slider } from "./ui/slider";
 import { formatPrice } from "@/utils/helpers";
 import { useListings } from "@/contexts/listings";
-import Link from "next/link";
 
 type NavbarProps = {
   listingTypes: string[];
@@ -117,14 +115,20 @@ export function Navbar({
     <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-100">
       <div className="flex items-center gap-6 px-6 py-3">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-1.5 shrink-0">
+        <button
+          onClick={() => {
+            window.history.replaceState(null, "", "/");
+            window.location.reload();
+          }}
+          className="flex items-center gap-1.5 shrink-0 cursor-pointer"
+        >
           <div className="w-9 h-9 bg-emerald-600 rounded-lg flex items-center justify-center">
             <Home className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold tracking-tight text-gray-900">
             PlotPirate
           </span>
-        </Link>
+        </button>
 
         {/* Center Search Bar */}
         <div className="flex-1 flex items-center gap-4">
