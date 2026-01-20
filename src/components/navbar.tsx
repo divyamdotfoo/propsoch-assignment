@@ -149,11 +149,10 @@ export function Navbar({
                 <button
                   key={type}
                   onClick={() => handleTypeSelect(type)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-colors cursor-pointer border ${
-                    isSelected
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                      : "bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-400"
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-colors cursor-pointer border ${isSelected
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                    : "bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-400"
+                    }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   {type}
@@ -192,11 +191,10 @@ export function Navbar({
           <Popover>
             <PopoverTrigger asChild>
               <button
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-colors cursor-pointer ${
-                  hasPriceFilter
-                    ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                    : "border-gray-200 hover:border-gray-400 text-gray-700"
-                }`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-colors cursor-pointer ${hasPriceFilter
+                  ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                  : "border-gray-200 hover:border-gray-400 text-gray-700"
+                  }`}
               >
                 <IndianRupee className="w-4 h-4" />
                 <span className="text-sm font-semibold">
@@ -272,17 +270,16 @@ export function Navbar({
           filters.type ||
           filters.name ||
           hasPriceFilter) && (
-          <button
-            onClick={() => {
-              clearFilters();
-              setSearchValue("");
-              setLocalPriceRange([priceRange.min, priceRange.max]);
-            }}
-            className="text-xs font-medium text-gray-500 hover:text-gray-700 underline underline-offset-2 shrink-0"
-          >
-            Clear all
-          </button>
-        )}
+            <button
+              onClick={() => {
+                window.history.replaceState(null, "", "/");
+                window.location.reload();
+              }}
+              className="text-xs font-medium text-gray-500 hover:text-gray-700 underline underline-offset-2 shrink-0 cursor-pointer"
+            >
+              Clear all
+            </button>
+          )}
       </div>
     </header>
   );
@@ -315,25 +312,22 @@ function LocationSelect({
     >
       <SelectTrigger
         hideIcon
-        className={`gap-2 px-4 py-2.5 rounded-full h-auto cursor-pointer ${
-          isSelected
-            ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-            : "bg-gray-50 hover:bg-gray-100 border-gray-200"
-        }`}
+        className={`gap-2 px-4 py-2.5 rounded-full h-auto cursor-pointer ${isSelected
+          ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+          : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+          }`}
       >
         <MapPin
-          className={`w-4 h-4 shrink-0 ${
-            isSelected ? "text-emerald-600" : "text-gray-600"
-          }`}
+          className={`w-4 h-4 shrink-0 ${isSelected ? "text-emerald-600" : "text-gray-600"
+            }`}
         />
         <div className="flex flex-col items-start gap-0">
           <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide leading-none">
             Location
           </span>
           <span
-            className={`text-sm font-semibold leading-tight ${
-              isSelected ? "text-emerald-700" : "text-gray-900"
-            }`}
+            className={`text-sm font-semibold leading-tight ${isSelected ? "text-emerald-700" : "text-gray-900"
+              }`}
           >
             <SelectValue />
           </span>
@@ -348,11 +342,10 @@ function LocationSelect({
         <SelectItem
           value="all"
           hideIndicator
-          className={`px-4 py-2.5 rounded-md ${
-            !isSelected
-              ? "text-emerald-600 font-semibold bg-emerald-50 hover:bg-emerald-50 focus:bg-emerald-50"
-              : "text-gray-700 hover:bg-gray-50 focus:bg-gray-50"
-          }`}
+          className={`px-4 py-2.5 rounded-md ${!isSelected
+            ? "text-emerald-600 font-semibold bg-emerald-50 hover:bg-emerald-50 focus:bg-emerald-50"
+            : "text-gray-700 hover:bg-gray-50 focus:bg-gray-50"
+            }`}
         >
           All Areas
         </SelectItem>
@@ -361,11 +354,10 @@ function LocationSelect({
             key={area}
             value={area}
             hideIndicator
-            className={`px-4 py-2.5 rounded-md ${
-              selectedLocation === area
-                ? "text-emerald-600 font-semibold bg-emerald-50 hover:bg-emerald-50 focus:bg-emerald-50"
-                : "text-gray-700 hover:bg-gray-50 focus:bg-gray-50"
-            }`}
+            className={`px-4 py-2.5 rounded-md ${selectedLocation === area
+              ? "text-emerald-600 font-semibold bg-emerald-50 hover:bg-emerald-50 focus:bg-emerald-50"
+              : "text-gray-700 hover:bg-gray-50 focus:bg-gray-50"
+              }`}
           >
             {area}
           </SelectItem>

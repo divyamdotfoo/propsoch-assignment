@@ -26,7 +26,7 @@ interface DiscoveryMapProps {
 }
 
 const DEFAULT_CENTER: [number, number] = [12.97, 77.59];
-const DEFAULT_ZOOM = 12;
+const DEFAULT_ZOOM = 10;
 
 const mapStyles = `
   .custom-price-marker {

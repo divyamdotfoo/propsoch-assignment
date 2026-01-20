@@ -1,44 +1,33 @@
-Project README — Discovery Map (Next.js + React-Leaflet)
+Hi team propsoch below I've outlined features added
 
-# Short summary
-This repo is a Next.js app that renders a property discovery map using react-leaflet. The app currently contains a few UI/UX bugs and small functional issues. Your task is to run the app locally, locate the TODO tasks in the codebase (files called discovery-map.tsx and page.tsx), and apply sensible fixes. This README explains how to run the app, where the tasks are, recommended fixes (practical, minimal, and robust), and how to verify them.
+- Split-screen layout with scrollable listings grid and sticky map view
 
-## Quick start
+- Property filtering by location micromarket with dropdown selection
 
-Clone the repo (if not already done):
+- Property type filters with visual icons for Apartment, Villa, Plot, and Row House
 
-git clone [<repo-url>](https://github.com/trishna-ps/frontend-engineer-task.git)
-cd frontend-engineer-task
+- Price range filter with dual-handle slider and live preview
 
+- Debounced search by project name for instant results
 
-# Install dependencies:
-pnpm i
+- Map bounds-based filtering that updates listings as you move the map
 
+- URL state management to persist all filters and page number in browser URL
 
-# Start dev server:
-pnpm run dev
+- Custom price markers on map showing property prices
 
+- Marker clustering that groups nearby properties
 
-# Open in browser:
-http://localhost:3000
+- Interactive property popups on map with images and details
 
+- Smart popup positioning that adjusts based on screen edges
 
-# Notes
+- Loading skeletons for navbar and property cards during data fetch
 
-This project uses pnpm. If you don’t have pnpm: npm i -g pnpm.
+- Server-side rendering with Next.js 16 for fast initial page load
 
-Node version: use a recent LTS (16.x / 18.x / 20.x). If you use nvm, run e.g. nvm use 18.
+- Context-based state management for efficient re-renders
 
+- Comprehensive meta tags including Open Graph and Twitter Card
 
-
-# Where the tasks live:
-
-Open these files and look for the TODO comments at the top of the file:
-
-components/discovery-map.tsx
-
-src/app/page.tsx
-
-
-## Submission
-Create a new repo and send the URL via email.
+- JSON-LD structured data for WebApplication, WebSite, RealEstateAgent, and BreadcrumbList schemas
