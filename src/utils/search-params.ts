@@ -1,4 +1,4 @@
-import { ListingType } from "@/types/listing";
+import { ListingType, MapBounds } from "@/types/listing";
 
 /**
  * Centralized search param keys - change here to update everywhere
@@ -11,6 +11,10 @@ export const SEARCH_PARAM_KEYS = {
   NAME: "name",
   PAGE: "page",
   CITY: "city",
+  SW_LAT: "swLat",
+  SW_LNG: "swLng",
+  NE_LAT: "neLat",
+  NE_LNG: "neLng",
 } as const;
 
 /**
@@ -22,6 +26,7 @@ export interface FiltersState {
   minPrice: number | null;
   maxPrice: number | null;
   name: string | null;
+  bounds: MapBounds | null;
 }
 
 /**
@@ -33,6 +38,7 @@ export const DEFAULT_FILTERS: FiltersState = {
   minPrice: null,
   maxPrice: null,
   name: null,
+  bounds: null,
 };
 
 /**
@@ -54,6 +60,20 @@ export function parseSearchParams(
 
   const minPriceStr = get(SEARCH_PARAM_KEYS.MIN_PRICE);
   const maxPriceStr = get(SEARCH_PARAM_KEYS.MAX_PRICE);
+  const swLat = get(SEARCH_PARAM_KEYS.SW_LAT);
+  const swLng = get(SEARCH_PARAM_KEYS.SW_LNG);
+  const neLat = get(SEARCH_PARAM_KEYS.NE_LAT);
+  const neLng = get(SEARCH_PARAM_KEYS.NE_LNG);
+
+  const bounds =
+    swLat && swLng && neLat && neLng
+      ? {
+          swLat: Number(swLat),
+          swLng: Number(swLng),
+          neLat: Number(neLat),
+          neLng: Number(neLng),
+        }
+      : null;
 
   return {
     micromarket: get(SEARCH_PARAM_KEYS.MICROMARKET),
@@ -61,6 +81,7 @@ export function parseSearchParams(
     minPrice: minPriceStr ? Number(minPriceStr) : null,
     maxPrice: maxPriceStr ? Number(maxPriceStr) : null,
     name: get(SEARCH_PARAM_KEYS.NAME),
+    bounds,
   };
 }
 
@@ -82,6 +103,20 @@ export function parseToServiceParams(
   const minPriceStr = get(SEARCH_PARAM_KEYS.MIN_PRICE);
   const maxPriceStr = get(SEARCH_PARAM_KEYS.MAX_PRICE);
   const pageStr = get(SEARCH_PARAM_KEYS.PAGE);
+  const swLat = get(SEARCH_PARAM_KEYS.SW_LAT);
+  const swLng = get(SEARCH_PARAM_KEYS.SW_LNG);
+  const neLat = get(SEARCH_PARAM_KEYS.NE_LAT);
+  const neLng = get(SEARCH_PARAM_KEYS.NE_LNG);
+
+  const bounds =
+    swLat && swLng && neLat && neLng
+      ? {
+          swLat: Number(swLat),
+          swLng: Number(swLng),
+          neLat: Number(neLat),
+          neLng: Number(neLng),
+        }
+      : undefined;
 
   return {
     city: get(SEARCH_PARAM_KEYS.CITY) || undefined,
@@ -91,6 +126,7 @@ export function parseToServiceParams(
     maxPrice: maxPriceStr ? Number(maxPriceStr) : undefined,
     name: get(SEARCH_PARAM_KEYS.NAME) || undefined,
     page: pageStr ? Number(pageStr) : 1,
+    bounds,
   };
 }
 
@@ -117,6 +153,12 @@ export function filtersToSearchParams(
   }
   if (filters.name) {
     params.set(SEARCH_PARAM_KEYS.NAME, filters.name);
+  }
+  if (filters.bounds) {
+    params.set(SEARCH_PARAM_KEYS.SW_LAT, String(filters.bounds.swLat));
+    params.set(SEARCH_PARAM_KEYS.SW_LNG, String(filters.bounds.swLng));
+    params.set(SEARCH_PARAM_KEYS.NE_LAT, String(filters.bounds.neLat));
+    params.set(SEARCH_PARAM_KEYS.NE_LNG, String(filters.bounds.neLng));
   }
   if (page && page > 1) {
     params.set(SEARCH_PARAM_KEYS.PAGE, String(page));
@@ -150,7 +192,7 @@ export function hasActiveFilters(filters: FiltersState): boolean {
     filters.type ||
     filters.minPrice !== null ||
     filters.maxPrice !== null ||
-    filters.name
+    filters.name ||
+    filters.bounds
   );
 }
-

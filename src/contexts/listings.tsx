@@ -1,176 +1,205 @@
 "use client";
 
 import {
-    createContext,
-    useContext,
-    useState,
-    useCallback,
-    useEffect,
-    useRef,
-    ReactNode,
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  ReactNode,
 } from "react";
 import { Listing } from "@/types/listing";
 import {
-    FiltersState,
-    DEFAULT_FILTERS,
-    filtersToSearchParams,
-    updateBrowserUrl,
-    SEARCH_PARAM_KEYS,
+  FiltersState,
+  DEFAULT_FILTERS,
+  filtersToSearchParams,
+  updateBrowserUrl,
 } from "@/utils/search-params";
+import { MapBounds } from "@/types/listing";
 
 interface ListingsState {
-    listings: Listing[];
-    totalPages: number;
-    currentPage: number;
-    totalListings: number;
+  listings: Listing[];
+  totalPages: number;
+  currentPage: number;
+  totalListings: number;
 }
 
 interface ListingsContextValue {
-    // State
-    listingsState: ListingsState;
-    filters: FiltersState;
-    isLoading: boolean;
+  // State
+  listingsState: ListingsState;
+  filters: FiltersState;
+  isLoading: boolean;
+  mapListings: Listing[];
+  isMapLoading: boolean;
+  initialBounds: MapBounds | null;
 
-    // Actions
-    setFilters: (filters: Partial<FiltersState>) => void;
-    clearFilters: () => void;
-    setPage: (page: number) => void;
-    fetchListings: () => Promise<void>;
-    setListingsState: (state: ListingsState) => void;
+  // Actions
+  setFilters: (filters: Partial<FiltersState>) => void;
+  clearFilters: () => void;
+  setPage: (page: number) => void;
+  setMapBounds: (bounds: MapBounds) => void;
 }
 
 const ListingsContext = createContext<ListingsContextValue | null>(null);
 
 interface ListingsProviderProps {
-    children: ReactNode;
-    initialListings: Listing[];
-    initialTotalPages: number;
-    initialCurrentPage: number;
-    initialTotalListings: number;
-    initialFilters?: FiltersState;
+  children: ReactNode;
+  initialListings: Listing[];
+  initialTotalPages: number;
+  initialCurrentPage: number;
+  initialTotalListings: number;
+  initialFilters?: FiltersState;
 }
 
 export function ListingsProvider({
-    children,
-    initialListings,
-    initialTotalPages,
-    initialCurrentPage,
-    initialTotalListings,
-    initialFilters,
+  children,
+  initialListings,
+  initialTotalPages,
+  initialCurrentPage,
+  initialTotalListings,
+  initialFilters,
 }: ListingsProviderProps) {
-    const [listingsState, setListingsState] = useState<ListingsState>({
-        listings: initialListings,
-        totalPages: initialTotalPages,
-        currentPage: initialCurrentPage,
-        totalListings: initialTotalListings,
-    });
+  const [listingsState, setListingsState] = useState<ListingsState>({
+    listings: initialListings,
+    totalPages: initialTotalPages,
+    currentPage: initialCurrentPage,
+    totalListings: initialTotalListings,
+  });
 
-    const [filters, setFiltersState] = useState<FiltersState>(
-        initialFilters || DEFAULT_FILTERS
-    );
-    const [isLoading, setIsLoading] = useState(false);
-    const isInitialMount = useRef(true);
+  const [filters, setFiltersState] = useState<FiltersState>(
+    initialFilters || DEFAULT_FILTERS
+  );
+  const [currentPage, setCurrentPage] = useState(initialCurrentPage);
+  const [isLoading, setIsLoading] = useState(false);
+  const [mapListings, setMapListings] = useState<Listing[]>(initialListings);
+  const [isMapLoading, setIsMapLoading] = useState(false);
 
-    const fetchListings = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const params = filtersToSearchParams(filters, listingsState.currentPage);
-            params.set(SEARCH_PARAM_KEYS.PAGE, String(listingsState.currentPage));
+  // Refs to track initial mount and skip unnecessary fetches
+  const isInitialMount = useRef(true);
+  const skipNextFetch = useRef(!!initialFilters?.bounds);
 
-            const response = await fetch(`/api/listings?${params.toString()}`);
-            const data = await response.json();
+  const initialBounds = initialFilters?.bounds || null;
 
-            setListingsState({
-                listings: data.listings,
-                totalPages: data.totalPages,
-                currentPage: data.currentPage,
-                totalListings: data.totalListings,
-            });
-        } catch (error) {
-            console.error("Failed to fetch listings:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [filters, listingsState.currentPage]);
+  /**
+   * Centralized fetch function - fetches both paginated listings and map listings
+   * This is the single source of truth for all data fetching
+   */
+  const fetchData = async (currentFilters: FiltersState, page: number) => {
+    setIsLoading(true);
+    setIsMapLoading(true);
 
-    // Auto-fetch when filters change (skip initial mount)
-    useEffect(() => {
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            return;
-        }
-        fetchListings();
-    }, [filters]);
+    try {
+      const params = filtersToSearchParams(currentFilters, page);
 
-    // Sync filters to browser URL
-    useEffect(() => {
-        updateBrowserUrl(filters, listingsState.currentPage);
-    }, [filters, listingsState.currentPage]);
+      // Fetch both paginated listings and map listings in parallel
+      const [listingsResponse, mapResponse] = await Promise.all([
+        fetch(`/api/listings?${params.toString()}`),
+        currentFilters.bounds
+          ? fetch(`/api/map-listings?${params.toString()}`)
+          : Promise.resolve(null),
+      ]);
 
-    const setFilters = useCallback((newFilters: Partial<FiltersState>) => {
-        setFiltersState((prev) => ({ ...prev, ...newFilters }));
-        // Reset to page 1 when filters change
-        setListingsState((prev) => ({ ...prev, currentPage: 1 }));
-    }, []);
+      const listingsData = await listingsResponse.json();
 
-    const clearFilters = useCallback(() => {
-        setFiltersState(DEFAULT_FILTERS);
-        setListingsState((prev) => ({ ...prev, currentPage: 1 }));
-    }, []);
+      setListingsState({
+        listings: listingsData.listings,
+        totalPages: listingsData.totalPages,
+        currentPage: listingsData.currentPage,
+        totalListings: listingsData.totalListings,
+      });
 
-    const setPage = useCallback(
-        (page: number) => {
-            setListingsState((prev) => ({ ...prev, currentPage: page }));
-            // Fetch with new page
-            setIsLoading(true);
-            const params = filtersToSearchParams(filters, page);
-            params.set(SEARCH_PARAM_KEYS.PAGE, String(page));
+      // Update map listings if we have bounds
+      if (mapResponse) {
+        const mapData = await mapResponse.json();
+        setMapListings(mapData.listings);
+      }
+    } catch (error) {
+      console.error("Failed to fetch listings:", error);
+    } finally {
+      setIsLoading(false);
+      setIsMapLoading(false);
+    }
+  };
 
-            fetch(`/api/listings?${params.toString()}`)
-                .then((res) => res.json())
-                .then((data) => {
-                    setListingsState({
-                        listings: data.listings,
-                        totalPages: data.totalPages,
-                        currentPage: data.currentPage,
-                        totalListings: data.totalListings,
-                    });
-                })
-                .catch((error) => {
-                    console.error("Failed to fetch listings:", error);
-                })
-                .finally(() => {
-                    setIsLoading(false);
-                });
+  // Single effect to handle all data fetching when filters or page changes
+  useEffect(() => {
+    // Skip initial mount - we already have SSR data
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Skip fetch if this is just syncing initial bounds from URL
+    if (skipNextFetch.current) {
+      skipNextFetch.current = false;
+      return;
+    }
+
+    fetchData(filters, currentPage);
+  }, [filters, currentPage]);
+
+  // Sync state to browser URL
+  useEffect(() => {
+    updateBrowserUrl(filters, currentPage);
+  }, [filters, currentPage]);
+
+  // Action: Update filters (resets to page 1)
+  const setFilters = useCallback((newFilters: Partial<FiltersState>) => {
+    setFiltersState((prev) => ({ ...prev, ...newFilters }));
+    setCurrentPage(1);
+  }, []);
+
+  // Action: Clear all filters
+  const clearFilters = useCallback(() => {
+    setFiltersState(DEFAULT_FILTERS);
+    setCurrentPage(1);
+  }, []);
+
+  // Action: Change page
+  const setPage = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  // Action: Update map bounds
+  const setMapBounds = useCallback((bounds: MapBounds) => {
+    // Skip API call on initial load if we already have bounds from URL
+    if (skipNextFetch.current) {
+      setFiltersState((prev) => ({ ...prev, bounds }));
+      return;
+    }
+
+    setFiltersState((prev) => ({ ...prev, bounds }));
+    setCurrentPage(1);
+  }, []);
+
+  return (
+    <ListingsContext.Provider
+      value={{
+        listingsState: {
+          ...listingsState,
+          currentPage,
         },
-        [filters]
-    );
-
-    return (
-        <ListingsContext.Provider
-            value={{
-                listingsState,
-                filters,
-                isLoading,
-                setFilters,
-                clearFilters,
-                setPage,
-                fetchListings,
-                setListingsState,
-            }}
-        >
-            {children}
-        </ListingsContext.Provider>
-    );
+        filters,
+        isLoading,
+        mapListings,
+        isMapLoading,
+        initialBounds,
+        setFilters,
+        clearFilters,
+        setPage,
+        setMapBounds,
+      }}
+    >
+      {children}
+    </ListingsContext.Provider>
+  );
 }
 
 export function useListings() {
-    const context = useContext(ListingsContext);
-    if (!context) {
-        throw new Error("useListings must be used within a ListingsProvider");
-    }
-    return context;
+  const context = useContext(ListingsContext);
+  if (!context) {
+    throw new Error("useListings must be used within a ListingsProvider");
+  }
+  return context;
 }
-
-// Re-export FiltersState for convenience
-export type { FiltersState };

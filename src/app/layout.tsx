@@ -37,7 +37,10 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             // escaping < characters as mentioned in nextjs docs to avoid XSS attacks
-            __html: JSON.stringify(webApplicationSchema).replace(/</g, "\\u003c"),
+            __html: JSON.stringify(webApplicationSchema).replace(
+              /</g,
+              "\\u003c"
+            ),
           }}
         />
         <script
@@ -49,7 +52,10 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbListSchema).replace(/</g, "\\u003c"),
+            __html: JSON.stringify(breadcrumbListSchema).replace(
+              /</g,
+              "\\u003c"
+            ),
           }}
         />
       </head>

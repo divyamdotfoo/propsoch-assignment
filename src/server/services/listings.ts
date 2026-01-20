@@ -35,14 +35,19 @@ class ListingService {
 
   async getUniqueMicromarkets(): Promise<string[]> {
     await simulateDbDelay();
-    const micromarketsSet = new Set(this.data.map((listing) => listing.micromarket));
+    const micromarketsSet = new Set(
+      this.data.map((listing) => listing.micromarket)
+    );
     const micromarkets = Array.from(micromarketsSet);
     return micromarkets.sort();
   }
 
   async getPriceRange(): Promise<{ min: number; max: number }> {
     await simulateDbDelay();
-    const prices = this.data.flatMap((listing) => [listing.minPrice, listing.maxPrice]);
+    const prices = this.data.flatMap((listing) => [
+      listing.minPrice,
+      listing.maxPrice,
+    ]);
     return {
       min: Math.min(...prices),
       max: Math.max(...prices),
@@ -67,6 +72,8 @@ class ListingService {
       maxPrice,
       name,
       page = 1,
+      bounds,
+      noPagination = false,
     } = params;
 
     await simulateDbDelay();
@@ -104,10 +111,34 @@ class ListingService {
         return false;
       }
 
+      // Map bounds filter
+      if (bounds) {
+        const { swLat, swLng, neLat, neLng } = bounds;
+        if (
+          listing.latitude < swLat ||
+          listing.latitude > neLat ||
+          listing.longitude < swLng ||
+          listing.longitude > neLng
+        ) {
+          return false;
+        }
+      }
+
       return true;
     });
 
     const totalListings = filtered.length;
+
+    // Return all results without pagination if noPagination is true
+    if (noPagination) {
+      return {
+        listings: filtered,
+        totalPages: 1,
+        currentPage: 1,
+        totalListings,
+      };
+    }
+
     const totalPages = Math.ceil(totalListings / this.PAGE_LIMIT);
     const startIndex = (page - 1) * this.PAGE_LIMIT;
     const endIndex = startIndex + this.PAGE_LIMIT;

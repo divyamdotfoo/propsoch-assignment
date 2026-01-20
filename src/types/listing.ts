@@ -34,6 +34,13 @@ export interface Listing {
   longitude: number;
 }
 
+export interface MapBounds {
+  swLat: number;
+  swLng: number;
+  neLat: number;
+  neLng: number;
+}
+
 export interface SearchListingsParams {
   city?: string;
   micromarket?: string;
@@ -43,6 +50,9 @@ export interface SearchListingsParams {
   name?: string;
   page?: number;
   limit?: number;
+  bounds?: MapBounds;
+  /** When true, returns all results without pagination (useful for map markers) */
+  noPagination?: boolean;
 }
 
 export interface SearchListingsResult {

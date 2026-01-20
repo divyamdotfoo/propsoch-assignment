@@ -4,6 +4,7 @@ import { ListingsGrid } from "@/components/listings-grid";
 import { Navbar } from "@/components/navbar";
 import { ListingsProvider } from "@/contexts/listings";
 import { parseSearchParams, parseToServiceParams } from "@/utils/search-params";
+import DiscoveryMapWrapper from "@/components/maps";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -14,13 +15,14 @@ export default async function Page({ searchParams }: PageProps) {
   const initialFilters = parseSearchParams(resolvedSearchParams);
   const serviceParams = parseToServiceParams(resolvedSearchParams);
 
-  const [listingsResult, totalCount, listingTypes, micromarkets, priceRange] = await Promise.all([
-    listingService.search(serviceParams),
-    listingService.getTotalCount(),
-    listingService.getUniqueListingTypes(),
-    listingService.getUniqueMicromarkets(),
-    listingService.getPriceRange(),
-  ]);
+  const [listingsResult, totalCount, listingTypes, micromarkets, priceRange] =
+    await Promise.all([
+      listingService.search(serviceParams),
+      listingService.getTotalCount(),
+      listingService.getUniqueListingTypes(),
+      listingService.getUniqueMicromarkets(),
+      listingService.getPriceRange(),
+    ]);
 
   return (
     <ListingsProvider
@@ -45,14 +47,8 @@ export default async function Page({ searchParams }: PageProps) {
 
           {/* Right Side - Map (Sticky) */}
           <div className="w-1/2 h-[calc(100vh-65px)] sticky top-[65px] pt-6 pr-6 pb-6 pl-4">
-            <div className="w-full h-full bg-white rounded-3xl flex items-center justify-center">
-              <div className="text-center p-6">
-                <div className="text-6xl mb-4">🗺️</div>
-                <p className="text-gray-500 text-lg font-medium">Map Container</p>
-                <p className="text-gray-400 text-sm mt-1">
-                  Map component will be rendered here
-                </p>
-              </div>
+            <div className="w-full h-full bg-white rounded-3xl overflow-hidden">
+              <DiscoveryMapWrapper />
             </div>
           </div>
         </main>

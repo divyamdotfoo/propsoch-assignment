@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 body {
-  background: #F7F7F7;
+  background: #f7f7f7;
   color: #212130;
 }
 

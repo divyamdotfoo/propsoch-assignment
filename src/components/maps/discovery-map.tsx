@@ -1,88 +1,92 @@
 import "leaflet/dist/leaflet.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
+import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import "leaflet-defaulticon-compatibility";
 
-import { JSX, useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import { useEffect, useCallback, useRef, useMemo } from "react";
 import {
   LayersControl,
   MapContainer,
   Marker,
-  Popup,
   TileLayer,
   useMap,
   useMapEvents,
 } from "react-leaflet";
-
-import { PropscoreRating } from "@/assets/PropsochRating";
-import {
-  cn,
-  concatenateTypologies,
-  formatDate,
-  formatPrice,
-  para,
-} from "@/utils/helpers";
-import { BudgetIcon } from "@/assets/budget-icon";
-import { HouseIcon } from "@/assets/house-icon";
-import { LocationIcon } from "@/assets/location-icon";
-import { CalendarIcon } from "@/assets/utility";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
-import { LocationType, Listing } from "@/types/listing";
-import { Badge } from "../badge";
+import { Listing, MapBounds } from "@/types/listing";
+import { formatPrice } from "@/utils/helpers";
 import { renderToString } from "react-dom/server";
-
-interface Location {
-  lat: number;
-  lon: number;
-  name: string;
-}
 
 interface DiscoveryMapProps {
   listings: Listing[];
+  onBoundsChange: (bounds: MapBounds) => void;
+  isLoading?: boolean;
+  initialBounds?: MapBounds | null;
 }
 
-export function DiscoveryMap({ listings }: Readonly<DiscoveryMapProps>) {
-  const [selectedLocation, setSelectedLocation] = useState<LocationType | null>(
-    null
-  );
-  const sectionRef = useRef(null);
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+// Default center for Bengaluru
+const DEFAULT_CENTER: [number, number] = [12.97, 77.59];
+const DEFAULT_ZOOM = 12;
 
-  useEffect(() => {
-    if (selectedLocation) {
-      const found = listings.find(
-        (listing: Listing) => listing.name == selectedLocation.name
-      );
-      setSelectedListing(found || null);
-      const el = document.querySelector(
-        `[data-marker-id="${selectedLocation.name}"]`
-      ) as HTMLElement | null;
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
+export function DiscoveryMap({
+  listings,
+  onBoundsChange,
+  isLoading,
+  initialBounds,
+}: Readonly<DiscoveryMapProps>) {
+  // Calculate initial center and bounds from URL params if available
+  const { center, bounds } = useMemo(() => {
+    if (initialBounds) {
+      const centerLat = (initialBounds.swLat + initialBounds.neLat) / 2;
+      const centerLng = (initialBounds.swLng + initialBounds.neLng) / 2;
+      return {
+        center: [centerLat, centerLng] as [number, number],
+        bounds: L.latLngBounds(
+          [initialBounds.swLat, initialBounds.swLng],
+          [initialBounds.neLat, initialBounds.neLng]
+        ),
+      };
     }
-  }, [selectedLocation, listings]);
+    return { center: DEFAULT_CENTER, bounds: null };
+  }, [initialBounds]);
 
   return (
     <section
-      ref={sectionRef}
       style={{ fontFamily: "Arial, sans-serif" }}
-      className="flex aspect-auto h-full flex-col gap-4 overflow-hidden"
-      aria-label={`Project discovery via map`}
+      className="flex aspect-auto h-full flex-col overflow-hidden relative"
+      aria-label="Property discovery via map"
     >
+      {/* Top center loading indicator like Airbnb */}
+      {isLoading && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000">
+          <div className="bg-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
+            <span className="text-sm font-medium text-gray-700">
+              Loading...
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Map Container */}
-      <div className="relative size-full overflow-hidden">
+      <div className="relative size-full overflow-hidden rounded-2xl">
         <MapContainer
-          center={[12.97, 77.59]}
-          zoom={12}
+          center={center}
+          zoom={DEFAULT_ZOOM}
+          bounds={bounds || undefined}
           scrollWheelZoom={true}
           dragging={true}
           touchZoom={true}
-          className="border-lightborder z-10 size-full rounded-lg border object-cover"
+          // Fix laggy zoom - one scroll = one zoom level
+          wheelDebounceTime={150}
+          wheelPxPerZoomLevel={120}
+          zoomSnap={1}
+          zoomDelta={1}
+          className="z-10 size-full rounded-2xl"
           aria-label="Map view"
         >
           <LayersControl position="bottomleft">
-            {/* Street View */}
             <LayersControl.BaseLayer checked name="Street View">
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -90,196 +94,171 @@ export function DiscoveryMap({ listings }: Readonly<DiscoveryMapProps>) {
               />
             </LayersControl.BaseLayer>
 
-            {/* Satellite View (Esri) */}
             <LayersControl.BaseLayer name="Satellite View">
               <TileLayer
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution='&copy; <a href="https://www.esri.com">Esri</a>'
               />
             </LayersControl.BaseLayer>
           </LayersControl>
-          <MapClickHandler onClick={() => setSelectedLocation(null)} />
-          <MapController selectedLocation={selectedLocation} />
 
-          {/* Project Location Marker */}
+          <MapBoundsHandler
+            onBoundsChange={onBoundsChange}
+            initialBounds={initialBounds}
+          />
 
-          {listings && listings.length > 0
-            ? listings.map((listing: Listing) => (
-                <Marker
-                  position={[listing.latitude, listing.longitude]}
-                  key={listing.id}
-                  icon={getOtherLocationIcon(
-                    listing.name,
-                    selectedListing?.id == listing.id
-                  )}
-                />
-              ))
-            : null}
-          {selectedLocation && selectedListing && (
-            <Popup
-              position={[selectedLocation.lat, selectedLocation.lon]}
-              autoClose={false}
-              closeOnClick={false}
-              offset={[0, -20]}
-              closeOnEscapeKey
-              minWidth={400}
-              closeButton
-            >
-              <Link
-                href={`/property-for-sale-in/${selectedListing.city.toLowerCase()}/${selectedListing.slug.toLowerCase()}/${
-                  selectedListing.id
-                }`}
-                target="_blank"
-              >
-                <div className="flex w-full flex-col gap-3">
-                  <Image
-                    src={selectedListing.image}
-                    alt={selectedListing.alt}
-                    width={500}
-                    height={500}
-                    loading="lazy"
-                    className={cn(
-                      "aspect-video size-full rounded-lg object-cover transition-all duration-400 ease-in-out",
-                      selectedListing.projectStatus === "soldOut" && "grayscale"
-                    )}
-                  />
-                  <h3
-                    className={cn(
-                      para({ size: "lg", color: "dark" }),
-                      "font-semibold"
-                    )}
-                  >
-                    {selectedListing.name}
-                  </h3>
-
-                  <div className="flex flex-col gap-3 whitespace-nowrap">
-                    <div className="flex w-full items-center justify-between">
-                      <span
-                        className={cn(
-                          para({ color: "dark", size: "sm" }),
-                          "flex w-full items-center gap-2"
-                        )}
-                      >
-                        <LocationIcon width={20} height={20} />
-                        <span>{selectedListing.micromarket}</span>
-                      </span>
-                      <span
-                        className={cn(
-                          para({ color: "dark", size: "sm" }),
-                          "flex w-full items-center justify-end gap-2"
-                        )}
-                      >
-                        <PropscoreRating
-                          rating={selectedListing.propscore}
-                          width={110}
-                          height={24}
-                          className={"ml-auto w-max max-w-40"}
-                        />
-                      </span>
-                    </div>
-                    <div className="flex w-full items-center justify-between gap-3">
-                      <span
-                        className={cn(
-                          para({ color: "dark", size: "sm" }),
-                          "flex w-full max-w-40 items-center gap-2 truncate"
-                        )}
-                      >
-                        <BudgetIcon width={20} height={20} />
-                        {formatPrice(selectedListing.minPrice, false)} -{" "}
-                        {formatPrice(selectedListing.maxPrice, false)}
-                      </span>
-                      <span
-                        className={cn(
-                          para({ color: "dark", size: "sm" }),
-                          "flex w-full items-center justify-end gap-2"
-                        )}
-                      >
-                        <CalendarIcon height={20} width={20} />
-                        {formatDate(selectedListing.possessionDate)}
-                      </span>
-                    </div>
-                    <div className="flex w-full items-center justify-between gap-3">
-                      <span
-                        className={cn(
-                          para({ color: "dark", size: "sm" }),
-                          "flex w-full max-w-40 items-center gap-2 truncate"
-                        )}
-                      >
-                        <HouseIcon width={20} height={20} />
-                        <span className="w-32 max-w-32 truncate">
-                          {concatenateTypologies(selectedListing.typologies)}
-                        </span>
-                      </span>
-                      <span
-                        className={cn(
-                          para({ color: "dark", size: "sm" }),
-                          "flex w-full items-center justify-end gap-2"
-                        )}
-                      >
-                        {selectedListing.minSaleableArea} -{" "}
-                        {selectedListing.maxSaleableArea} sqft
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </Popup>
-          )}
+          {/* Clustered listing markers */}
+          <MarkerClusterGroup
+            chunkedLoading
+            iconCreateFunction={createClusterIcon}
+            maxClusterRadius={60}
+            spiderfyOnMaxZoom={true}
+            showCoverageOnHover={false}
+            zoomToBoundsOnClick={true}
+            disableClusteringAtZoom={16}
+          >
+            {listings.map((listing) => (
+              <Marker
+                key={listing.id}
+                position={[listing.latitude, listing.longitude]}
+                icon={createPriceIcon(listing.minPrice)}
+              />
+            ))}
+          </MarkerClusterGroup>
         </MapContainer>
       </div>
     </section>
   );
 }
 
-// keeping utilities functions below the main export
-
-export const renderIcon = (
-  icon: JSX.Element,
-  ariaLabel: string,
-  transform = "translate(-8px, -4px)"
-) =>
-  `<div style="transform: ${transform}" aria-label="${ariaLabel}" role="button">${renderToString(
-    icon
-  )}</div>`;
-
-function getOtherLocationIcon(
-  label: string,
-  isSelected: boolean,
-  icon = true
-): L.DivIcon {
-  return L.divIcon({
-    html: renderIcon(
-      <Badge variant={"white"} className="w-max whitespace-nowrap">
-        {label}
-      </Badge>,
-      label,
-      isSelected ? "translate(-10px, -20px)" : "translate(-15px, -20px)"
-    ),
-  });
-}
-
-function MapClickHandler({ onClick }: { onClick: () => void }) {
-  useMapEvents({
-    click: () => onClick(),
-  });
-  return null;
-}
-
-function MapController({
-  selectedLocation,
-}: Readonly<{
-  selectedLocation: Location | null;
-}>) {
+/**
+ * Component to handle map bounds changes
+ */
+function MapBoundsHandler({
+  onBoundsChange,
+  initialBounds,
+}: {
+  onBoundsChange: (bounds: MapBounds) => void;
+  initialBounds?: MapBounds | null;
+}) {
   const map = useMap();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isFirstLoad = useRef(true);
 
-  useEffect(() => {
-    if (selectedLocation) {
-      map.panTo([selectedLocation.lat, selectedLocation.lon], {
-        animate: true,
-        duration: 1.5,
-      });
+  const handleBoundsChange = useCallback(() => {
+    // Debounce the bounds change to avoid too many API calls
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
-  }, [selectedLocation, map]);
+
+    timeoutRef.current = setTimeout(() => {
+      const bounds = map.getBounds();
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
+
+      onBoundsChange({
+        swLat: sw.lat,
+        swLng: sw.lng,
+        neLat: ne.lat,
+        neLng: ne.lng,
+      });
+    }, 300);
+  }, [map, onBoundsChange]);
+
+  // Set initial bounds from URL when map loads
+  useEffect(() => {
+    if (isFirstLoad.current && initialBounds) {
+      // Fit map to initial bounds from URL
+      map.fitBounds([
+        [initialBounds.swLat, initialBounds.swLng],
+        [initialBounds.neLat, initialBounds.neLng],
+      ]);
+      isFirstLoad.current = false;
+      // Trigger bounds change to sync state
+      handleBoundsChange();
+    } else if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      handleBoundsChange();
+    }
+  }, [map, initialBounds, handleBoundsChange]);
+
+  // Listen to map events
+  useMapEvents({
+    moveend: handleBoundsChange,
+    zoomend: handleBoundsChange,
+  });
 
   return null;
+}
+
+/**
+ * Create a custom cluster icon showing count
+ */
+function createClusterIcon(cluster: {
+  getChildCount: () => number;
+}): L.DivIcon {
+  const count = cluster.getChildCount();
+
+  const iconHtml = renderToString(
+    <div
+      style={{
+        backgroundColor: "white",
+        padding: "8px 12px",
+        borderRadius: "20px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+        fontSize: "13px",
+        fontWeight: "700",
+        color: "#1a1a1a",
+        whiteSpace: "nowrap",
+        border: "2px solid #e5e5e5",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minWidth: "40px",
+      }}
+    >
+      {count}
+    </div>
+  );
+
+  return L.divIcon({
+    html: iconHtml,
+    className: "custom-cluster-icon",
+    iconSize: [50, 36],
+    iconAnchor: [25, 18],
+  });
+}
+
+/**
+ * Create a price tag icon for map markers
+ */
+function createPriceIcon(price: number): L.DivIcon {
+  const formattedPrice = `₹${formatPrice(price, false)}`;
+
+  const iconHtml = renderToString(
+    <div className="price-marker">
+      <div
+        style={{
+          backgroundColor: "white",
+          padding: "6px 10px",
+          borderRadius: "20px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          fontSize: "13px",
+          fontWeight: "600",
+          color: "#1a1a1a",
+          whiteSpace: "nowrap",
+          border: "1px solid #e5e5e5",
+        }}
+      >
+        {formattedPrice}
+      </div>
+    </div>
+  );
+
+  return L.divIcon({
+    html: iconHtml,
+    className: "custom-price-marker",
+    iconSize: [80, 30],
+    iconAnchor: [40, 15],
+  });
 }
